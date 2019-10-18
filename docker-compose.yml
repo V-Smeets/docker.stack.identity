@@ -1,9 +1,11 @@
 version: "3.7"
 
 secrets:
-  identity.keycloak.user:
+  identity.keycloak.admin.user:
     external: true
-  identity.keycloak.password:
+  identity.keycloak.admin.password:
+    external: true
+  identity.postgres.root.password:
     external: true
 
 networks:
@@ -11,9 +13,20 @@ networks:
     driver: "overlay"
 
 volumes:
-  data:
+  pg-data:
 
 services:
+  postgres:
+    image: "postgres"
+    networks:
+      - "net"
+    environment:
+      - "POSTGRES_PASSWORD_FILE=/run/secrets/identity.postgres.root.password"
+    secrets:
+      - "identity.postgres.root.password"
+    volumes:
+      - "pg-data:/var/lib/postgresql/data"
+
   keycloak:
     image: "jboss/keycloak"
     networks:
@@ -21,10 +34,10 @@ services:
     ports:
       - "8080:8080"
     secrets:
-      - "identity.keycloak.user"
-      - "identity.keycloak.password"
+      - "identity.keycloak.admin.user"
+      - "identity.keycloak.admin.password"
     environment:
-      - "KEYCLOAK_USER_FILE=/run/secrets/identity.keycloak.user"
-      - "KEYCLOAK_PASSWORD_FILE=/run/secrets/identity.keycloak.password"
+      - "KEYCLOAK_USER_FILE=/run/secrets/identity.keycloak.admin.user"
+      - "KEYCLOAK_PASSWORD_FILE=/run/secrets/identity.keycloak.admin.password"
 
 # vim:sw=2:

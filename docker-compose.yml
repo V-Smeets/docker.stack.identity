@@ -1,0 +1,30 @@
+version: "3.7"
+
+secrets:
+  identity.keycloak.user:
+    external: true
+  identity.keycloak.password:
+    external: true
+
+networks:
+  net:
+    driver: "overlay"
+
+volumes:
+  data:
+
+services:
+  keycloak:
+    image: "jboss/keycloak"
+    networks:
+      - "net"
+    ports:
+      - "8080:8080"
+    secrets:
+      - "identity.keycloak.user"
+      - "identity.keycloak.password"
+    environment:
+      - "KEYCLOAK_USER_FILE=/run/secrets/identity.keycloak.user"
+      - "KEYCLOAK_PASSWORD_FILE=/run/secrets/identity.keycloak.password"
+
+# vim:sw=2:

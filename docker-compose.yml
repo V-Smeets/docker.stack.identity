@@ -1,9 +1,15 @@
 version: "3.7"
 
 secrets:
-  identity.keycloak.user:
+  identity.keycloak.admin.user:
     external: true
-  identity.keycloak.password:
+  identity.keycloak.admin.password:
+    external: true
+  identity.postgres.root.password:
+    external: true
+  identity.postgres.keycloak.user:
+    external: true
+  identity.postgres.keycloak.password:
     external: true
 
 networks:
@@ -11,20 +17,46 @@ networks:
     driver: "overlay"
 
 volumes:
-  data:
+  pg-data:
 
 services:
+  postgres:
+    image: "vsmeets/docker.image.postgres"
+    networks:
+      - "net"
+    secrets:
+      - "identity.postgres.root.password"
+      - "identity.postgres.keycloak.user"
+      - "identity.postgres.keycloak.password"
+    volumes:
+      - "pg-data:/var/lib/postgresql/data"
+    environment:
+      - "POSTGRES_PASSWORD_FILE=/run/secrets/identity.postgres.root.password"
+      - "POSTGRES_CREATE_USER_1_NAME_FILE=/run/secrets/identity.postgres.keycloak.user"
+      - "POSTGRES_CREATE_USER_1_PASSWORD_FILE=/run/secrets/identity.postgres.keycloak.password"
+      - "POSTGRES_CREATE_DATABASE_1_NAME=keycloak"
+      - "POSTGRES_CREATE_DATABASE_1_OWNER_FILE=/run/secrets/identity.postgres.keycloak.user"
+
   keycloak:
     image: "jboss/keycloak"
+    depends_on:
+      - "postgres"
     networks:
       - "net"
     ports:
       - "8080:8080"
     secrets:
-      - "identity.keycloak.user"
-      - "identity.keycloak.password"
+      - "identity.keycloak.admin.user"
+      - "identity.keycloak.admin.password"
+      - "identity.postgres.keycloak.user"
+      - "identity.postgres.keycloak.password"
     environment:
-      - "KEYCLOAK_USER_FILE=/run/secrets/identity.keycloak.user"
-      - "KEYCLOAK_PASSWORD_FILE=/run/secrets/identity.keycloak.password"
+      - "KEYCLOAK_USER_FILE=/run/secrets/identity.keycloak.admin.user"
+      - "KEYCLOAK_PASSWORD_FILE=/run/secrets/identity.keycloak.admin.password"
+      - "DB_VENDOR=postgres"
+      - "DB_ADDR=postgres"
+      - "DB_DATABASE=keycloak"
+      - "DB_USER_FILE=/run/secrets/identity.postgres.keycloak.user"
+      - "DB_PASSWORD_FILE=/run/secrets/identity.postgres.keycloak.password"
 
 # vim:sw=2:

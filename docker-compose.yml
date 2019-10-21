@@ -45,6 +45,7 @@ services:
       - "net"
     ports:
       - "8080:8080"
+      - "8443:8443"
     secrets:
       - "identity.keycloak.admin.user"
       - "identity.keycloak.admin.password"
